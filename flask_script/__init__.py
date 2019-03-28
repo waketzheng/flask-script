@@ -76,7 +76,6 @@ class Manager(object):
 
     def __init__(self, app=None, with_default_commands=None, usage=None,
                  help=None, description=None, disable_argcomplete=False):
-
         self.app = app
         
         self.subparser_kwargs = dict()
@@ -412,7 +411,14 @@ class Manager(object):
         argv = list(text_type(arg) for arg in sys.argv)
         if default_command is not None and len(argv) == 1:
             argv.append(default_command)
-
+        if 'runserver' in argv and len(argv) == 3 and argv[2][0] in ('0:'):
+            # `runserver 0:9000` --> `runserver -h 0.0.0.0 -p 9000`
+            host, port = argv[2].split(':')
+            if not host or host == '0':
+                host = '0.0.0.0'
+            argv[2] = '-h'
+            for i in (host, '-p', port):
+                argv.append(i)
         try:
             result = self.handle(argv[0], argv[1:])
         except SystemExit as e:
